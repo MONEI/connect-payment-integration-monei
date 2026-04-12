@@ -21,7 +21,7 @@
     "@commercetools/sdk-client-v2": "^2.0.0",
     "fastify": "^5.8.4",
     "dotenv": "^16.3.0",
-    "zod": "^3.22.0"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/jest": "^29.5.0",
