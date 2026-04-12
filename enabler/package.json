@@ -14,7 +14,7 @@
     "@monei-js/components": "^2.0.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.0",
+    "@types/jest": "^30.0.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "css-loader": "^6.8.0",
