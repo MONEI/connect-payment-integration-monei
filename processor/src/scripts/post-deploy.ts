@@ -10,10 +10,7 @@
  * - monei-transaction-type: Stores MONEI transaction metadata
  */
 
-import { getConfig } from '../config';
-
 async function postDeploy(): Promise<void> {
-  const config = getConfig();
 
   console.log('[MONEI Post-Deploy] Setting up custom types...');
 

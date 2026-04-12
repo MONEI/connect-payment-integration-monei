@@ -12,9 +12,7 @@ import {
  * The payload contains the full payment object.
  * See: https://docs.monei.com/docs/guides/set-up-notifications
  */
-interface MoneiWebhookPayload extends MoneiPaymentResponse {
-  // The full payment object is sent as the webhook body
-}
+type MoneiWebhookPayload = MoneiPaymentResponse;
 
 /**
  * Handle incoming MONEI webhook events
@@ -66,24 +64,11 @@ export async function handleWebhook(
       'SALE' // TODO: determine from payment metadata
     );
 
+    console.log(
+      `[MONEI Webhook] Mapped to CT transaction: type=${ctTransactionType}, state=${ctTransactionState}`
+    );
+
     // TODO: Use connect-payments-sdk to update commercetools payment
-    // This is where we:
-    // 1. Find the CT payment by MONEI payment ID (stored in interfaceId)
-    // 2. Add/update the transaction with the new state
-    // 3. Update payment status information
-    //
-    // Example using CT SDK:
-    // const ctPayment = await findPaymentByInterfaceId(payment.id);
-    // await updatePaymentTransaction(ctPayment, {
-    //   type: ctTransactionType,
-    //   state: ctTransactionState,
-    //   amount: {
-    //     centAmount: payment.amount,
-    //     currencyCode: payment.currency,
-    //   },
-    //   interactionId: payment.id,
-    //   timestamp: payment.updatedAt,
-    // });
 
     // Store payment method info if available
     if (payment.paymentMethod) {

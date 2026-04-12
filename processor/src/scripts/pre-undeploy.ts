@@ -9,10 +9,7 @@
  * created by the connector are removed.
  */
 
-import { getConfig } from '../config';
-
 async function preUndeploy(): Promise<void> {
-  const config = getConfig();
 
   console.log('[MONEI Pre-Undeploy] Cleaning up connector resources...');
 

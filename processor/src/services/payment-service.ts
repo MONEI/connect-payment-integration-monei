@@ -4,7 +4,7 @@ import {
   MoneiPaymentResponse,
   MoneiPaymentStatus,
 } from '../libs/monei-client';
-import { getConfig, getEnabledPaymentMethods } from '../config';
+import { getEnabledPaymentMethods } from '../config';
 
 /**
  * Maps commercetools payment method to MONEI payment method type
