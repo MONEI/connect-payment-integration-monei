@@ -123,24 +123,14 @@ All incoming webhooks are verified using HMAC-SHA256 signatures before processin
 
 MONEI follows the [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) standard. commercetools provides monetary values in cent amounts (e.g., €1.50 = `150`). The connector handles conversion automatically using utilities from [connect-payments-sdk](https://github.com/commercetools/connect-payments-sdk).
 
-## Publishing
+## Deployment
 
-### Private use
-
-Deploy the connector to your own commercetools projects without certification:
+Deploy the connector to commercetools Connect using the [Connect CLI](https://docs.commercetools.com/connect/cli):
 
 ```bash
 npm install -g @commercetools-connect/cli
 connect-cli connector create
-connect-cli connector publish --certification false
-```
-
-### Connect marketplace
-
-To list on the [Connect marketplace](https://docs.commercetools.com/merchant-center/connect), submit for [certification](https://docs.commercetools.com/connect/certification):
-
-```bash
-connect-cli connector publish --certification true
+connect-cli connector publish
 ```
 
 ## Documentation
