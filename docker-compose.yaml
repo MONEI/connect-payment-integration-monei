@@ -1,0 +1,35 @@
+services:
+  jwt-server:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./jwt-server:/app
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3100:3100"
+    environment:
+      - PORT=3100
+
+  enabler:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./enabler:/app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./enabler/.env
+
+  processor:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./processor:/app
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./processor/.env
+    depends_on:
+      - jwt-server

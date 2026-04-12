@@ -1,0 +1,64 @@
+deployAs:
+  - name: enabler
+    applicationType: assets
+  - name: processor
+    applicationType: service
+    endpoint: /
+    configuration:
+      standardConfiguration:
+        - key: CTP_PROJECT_KEY
+          description: commercetools project key
+          required: true
+        - key: CTP_CLIENT_ID
+          description: commercetools client ID with manage_payments, manage_orders, view_sessions, view_api_clients, manage_checkout_payment_intents & introspect_oauth_tokens scopes
+          required: true
+        - key: CTP_AUTH_URL
+          description: commercetools Auth URL
+          required: true
+          default: https://auth.europe-west1.gcp.commercetools.com
+        - key: CTP_API_URL
+          description: commercetools API URL
+          required: true
+          default: https://api.europe-west1.gcp.commercetools.com
+        - key: CTP_SESSION_URL
+          description: Session API URL
+          required: true
+          default: https://session.europe-west1.gcp.commercetools.com
+        - key: CTP_JWKS_URL
+          description: JWKs url (example - https://mc-api.europe-west1.gcp.commercetools.com/.well-known/jwks.json)
+          required: true
+          default: https://mc-api.europe-west1.gcp.commercetools.com/.well-known/jwks.json
+        - key: CTP_JWT_ISSUER
+          description: JWT Issuer for jwt validation (example - https://mc-api.europe-west1.gcp.commercetools.com)
+          required: true
+          default: https://mc-api.europe-west1.gcp.commercetools.com
+        - key: MONEI_ACCOUNT_ID
+          description: MONEI merchant account ID
+          required: true
+        - key: MONEI_ENVIRONMENT
+          description: MONEI environment (test or live)
+          required: true
+          default: test
+        - key: MONEI_PAYMENT_METHODS_ENABLED
+          description: 'Comma-separated list of enabled payment methods. Available: bizum,card,applePay,googlePay,sepaDirectDebit'
+          required: false
+          default: bizum,card,applePay,googlePay
+        - key: STORED_PAYMENT_METHODS_ENABLED
+          description: If set to "true" then the stored payment methods feature is enabled. Default value is "false".
+          required: false
+        - key: STORED_PAYMENT_METHODS_PAYMENT_INTERFACE
+          description: The payment method payment interface value used in the commercetools payment methods. Default value is "monei".
+          required: false
+        - key: STORED_PAYMENT_METHODS_INTERFACE_ACCOUNT
+          description: The payment method interface account value used in the commercetools payment methods.
+          required: false
+      securedConfiguration:
+        - key: CTP_CLIENT_SECRET
+          description: commercetools client secret
+          required: true
+        - key: MONEI_API_KEY
+          description: MONEI API key for authenticating requests to MONEI platform
+          required: true
+        - key: MONEI_WEBHOOK_SECRET
+          description: MONEI webhook secret for verifying webhook signatures
+          required: true
