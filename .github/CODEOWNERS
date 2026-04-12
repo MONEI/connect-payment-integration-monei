@@ -1,0 +1,12 @@
+# Default owner for everything
+* @MONEI/engineering
+
+# Processor module
+/processor/ @jimmyn
+
+# Enabler module
+/enabler/ @jimmyn
+
+# CI and repo config
+/.github/ @jimmyn
+/connect.yaml @jimmyn

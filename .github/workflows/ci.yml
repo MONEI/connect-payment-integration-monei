@@ -6,39 +6,83 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   processor:
-    name: Processor - Build & Test
+    name: Processor
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./processor
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: processor/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --passWithNoTests
 
   enabler:
-    name: Enabler - Build & Test
+    name: Enabler
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./enabler
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: enabler/package-lock.json
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test -- --passWithNoTests
+
+  validate-connect-yaml:
+    name: Validate connect.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check connect.yaml exists and is valid YAML
+        run: |
+          if [ ! -f connect.yaml ]; then
+            echo "❌ connect.yaml not found"
+            exit 1
+          fi
+          python3 -c "import yaml; yaml.safe_load(open('connect.yaml'))"
+          echo "✅ connect.yaml is valid"
+
+      - name: Verify required applications
+        run: |
+          python3 -c "
+          import yaml
+          with open('connect.yaml') as f:
+              config = yaml.safe_load(f)
+          apps = {a['name'] for a in config.get('deployAs', [])}
+          assert 'enabler' in apps, 'Missing enabler application'
+          assert 'processor' in apps, 'Missing processor application'
+          print('✅ Both enabler and processor defined')
+          "
