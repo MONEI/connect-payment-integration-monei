@@ -20,7 +20,7 @@
     "@commercetools/platform-sdk": "^7.0.0",
     "@commercetools/sdk-client-v2": "^2.0.0",
     "fastify": "^5.8.4",
-    "dotenv": "^16.3.0",
+    "dotenv": "^17.4.2",
     "zod": "^4.3.6"
   },
   "devDependencies": {
