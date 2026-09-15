@@ -1,0 +1,8 @@
+version: "3.8"
+
+services:
+  jwt-server:
+    build: ../docker-dev/jwt-mock
+    restart: always
+    ports:
+      - 9002:9002
