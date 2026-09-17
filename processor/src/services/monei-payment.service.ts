@@ -359,6 +359,17 @@ export class MoneiPaymentService extends AbstractPaymentService {
     };
   }
 
+  /** Amount for the current session's cart, for components that must display it before a payment exists. */
+  public async getPaymentAmount(): Promise<{ centAmount: number; currencyCode: string; fractionDigits: number }> {
+    const ctCart = await this.ctCartService.getCart({ id: getCartIdFromContext() });
+    const amount = await this.ctCartService.getPaymentAmount({ cart: ctCart });
+    return {
+      centAmount: amount.centAmount,
+      currencyCode: amount.currencyCode,
+      fractionDigits: amount.fractionDigits ?? 2,
+    };
+  }
+
   /** Polling fallback for the return page: re-reads MONEI and syncs the CT Payment if the webhook is late. */
   public async getPaymentStatus(ctPaymentId: string): Promise<{ moneiPaymentId: string; status: string }> {
     const ctPayment = await this.ctPaymentService.getPayment({ id: ctPaymentId });
@@ -493,6 +504,11 @@ export class MoneiPaymentService extends AbstractPaymentService {
     const callbackUrl = cfg.connectServiceUrl
       ? `${cfg.connectServiceUrl.replace(/\/$/, '')}/webhooks/monei`
       : undefined;
+    // The enabler does not know the CT payment id when it builds its return URL; it leaves a placeholder.
+    const withRef = (url?: string) =>
+      url?.replace('{paymentReference}', ctPayment.id).replace('%7BpaymentReference%7D', ctPayment.id);
+    const returnUrl = withRef(data.returnUrl) ?? cfg.returnUrl;
+    const cancelUrl = withRef(data.cancelUrl) ?? returnUrl;
 
     return {
       amount: ctPayment.amountPlanned.centAmount,
@@ -539,9 +555,9 @@ export class MoneiPaymentService extends AbstractPaymentService {
         },
       }),
       ...(callbackUrl && { callbackUrl }),
-      completeUrl: data.returnUrl ?? cfg.returnUrl,
-      cancelUrl: data.cancelUrl ?? data.returnUrl ?? cfg.returnUrl,
-      failUrl: data.returnUrl ?? cfg.returnUrl,
+      completeUrl: returnUrl,
+      cancelUrl,
+      failUrl: returnUrl,
       metadata: {
         ctCartId: ctCart.id,
         ctPaymentId: ctPayment.id,

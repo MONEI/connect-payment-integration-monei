@@ -120,6 +120,19 @@ describe('MoneiPaymentService', () => {
       });
     });
 
+    test('substitutes the {paymentReference} placeholder in the return URL with the CT payment id', async () => {
+      client.createPayment.mockResolvedValue(moneiPayment());
+      await service.createPayment({
+        data: {
+          paymentMethod: { type: 'bizum' as never },
+          returnUrl: 'https://shop.example.com/return?ctPaymentReference=%7BpaymentReference%7D',
+        },
+      });
+      expect(client.createPayment.mock.calls[0][0].completeUrl).toBe(
+        `https://shop.example.com/return?ctPaymentReference=${mockGetPaymentResultWithoutTransactions.id}`,
+      );
+    });
+
     test('card with MONEI.js token: forwards the token and records a successful Charge', async () => {
       client.createPayment.mockResolvedValue(moneiPayment({ status: 'SUCCEEDED', nextAction: { type: 'COMPLETE' } }));
 
@@ -298,6 +311,16 @@ describe('MoneiPaymentService', () => {
       const res = await service.applyMoneiPayment(moneiPayment({ status: 'PAID_OUT' }));
       expect(updateCtPayment).not.toHaveBeenCalled();
       expect(res.applied).toBe(false);
+    });
+  });
+
+  describe('getPaymentAmount', () => {
+    test('returns the session cart amount from commercetools', async () => {
+      await expect(service.getPaymentAmount()).resolves.toEqual({
+        centAmount: 150000,
+        currencyCode: 'EUR',
+        fractionDigits: 2,
+      });
     });
   });
 

@@ -36,6 +36,23 @@ export const paymentRoutes = async (fastify: FastifyInstance, opts: FastifyPlugi
     },
   );
 
+  /** Amount the enabler must present to wallet / Bizum components; always read from the session's cart. */
+  fastify.get<{ Reply: { centAmount: number; currencyCode: string; fractionDigits: number } }>(
+    '/payment-amount',
+    {
+      preHandler: [opts.sessionHeaderAuthHook.authenticate()],
+      schema: {
+        response: {
+          200: Type.Object({ centAmount: Type.Number(), currencyCode: Type.String(), fractionDigits: Type.Number() }),
+        },
+      },
+    },
+    async (_request, reply) => {
+      const amount = await opts.paymentService.getPaymentAmount();
+      return reply.status(200).send(amount);
+    },
+  );
+
   fastify.get<{ Params: { id: string }; Reply: PaymentStatusResponseSchemaDTO }>(
     '/payments/:id',
     {

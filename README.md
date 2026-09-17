@@ -9,7 +9,7 @@ This repository provides a [commercetools Connect](https://docs.commercetools.co
 
 [MONEI](https://monei.com) is a Payment Institution licensed by the Banco de España (reg. #6911), providing API-first payment infrastructure for online and in-store commerce across Spain and Europe.
 
-This connector follows the [commercetools payment integration template](https://docs.commercetools.com/connect/templates/payment-integration) pattern and is compatible with [commercetools Checkout](https://docs.commercetools.com/checkout).
+The processor and enabler are built on the [commercetools payment integration template](https://docs.commercetools.com/connect/templates/payment-integration) (`@commercetools/connect-payments-sdk`, Checkout `Enabler` contract). Compatibility with [commercetools Checkout](https://docs.commercetools.com/checkout) is implemented and unit-tested; end-to-end verification against a commercetools project and Connect Marketplace certification are pending. Until then the connector is deployed from this repository with the Connect CLI, not installed from the Marketplace.
 
 ### Supported payment methods
 
@@ -33,7 +33,7 @@ The connector contains two applications:
 
 | Application | Type | Description |
 |-------------|------|-------------|
-| **Enabler** | `assets` | Frontend library wrapping MONEI payment UI components (card input, Bizum button, wallet buttons). Served as static assets to commercetools Checkout or custom frontends. |
+| **Enabler** | `assets` | Checkout `Enabler` implementation over MONEI.js: card (hosted iframes), Bizum (request-to-pay or redirect), Apple Pay / Google Pay, embedded drop-in. Bundle `monei-enabler.umd.js`, global `Enabler`. |
 | **Processor** | `service` | Backend service orchestrating payment operations with the [MONEI Payments API](https://docs.monei.com/api). Handles payment creation, capture, refund, cancellation, and webhook event processing. |
 
 Both applications can be hosted on Connect or on alternative platforms, and can be used together with [Checkout](https://docs.commercetools.com/checkout) or in custom frontend applications.

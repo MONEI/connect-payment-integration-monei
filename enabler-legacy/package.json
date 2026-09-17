@@ -1,0 +1,33 @@
+{
+  "name": "monei-commercetools-enabler",
+  "version": "1.0.0",
+  "description": "MONEI payment enabler for commercetools Connect - frontend components",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack serve --mode development",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.1",
+    "@typescript-eslint/parser": "^8.58.1",
+    "css-loader": "^6.8.0",
+    "eslint": "^8.57.0",
+    "html-webpack-plugin": "^5.5.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "sass": "^1.69.0",
+    "sass-loader": "^16.0.7",
+    "style-loader": "^3.3.0",
+    "ts-jest": "^29.1.0",
+    "ts-loader": "^9.5.0",
+    "typescript": "^6.0.2",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.0",
+    "webpack-dev-server": "^5.2.3"
+  }
+}
