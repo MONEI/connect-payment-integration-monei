@@ -220,10 +220,58 @@ describe('MoneiPaymentService', () => {
       expect(res.outcome).toBe('rejected');
     });
 
+    test('capture that MONEI answers with FAILED is recorded as Charge/Failure and rejected', async () => {
+      client.capturePayment.mockResolvedValue(moneiPayment({ status: 'FAILED' }));
+      const res = await service.capturePayment({
+        payment: mockGetPaymentResult,
+        amount: { centAmount: 1000, currencyCode: 'GBP' },
+        merchantReference: 'ref',
+      });
+      expect(updateCtPayment).toHaveBeenCalledWith(
+        expect.objectContaining({ transaction: expect.objectContaining({ type: 'Charge', state: 'Failure' }) }),
+      );
+      expect(res.outcome).toBe('rejected');
+    });
+
+    test('refund still in progress at MONEI is recorded as Refund/Pending and reported as received', async () => {
+      client.refundPayment.mockResolvedValue(moneiPayment({ status: 'SUCCEEDED' }));
+      const res = await service.refundPayment({
+        payment: mockGetPaymentResult,
+        amount: { centAmount: 500, currencyCode: 'GBP' },
+        merchantReference: 'ref',
+      });
+      expect(updateCtPayment).toHaveBeenCalledWith(
+        expect.objectContaining({ transaction: expect.objectContaining({ type: 'Refund', state: 'Pending' }) }),
+      );
+      expect(res.outcome).toBe('received');
+    });
+
+    test('a commercetools write error after a successful MONEI refund propagates instead of reporting a rejection', async () => {
+      // MONEI already refunded; a "rejected" answer would invite a second refund.
+      client.refundPayment.mockResolvedValue(moneiPayment({ status: 'REFUNDED' }));
+      updateCtPayment.mockRejectedValue(new Error('ct down'));
+      await expect(
+        service.refundPayment({
+          payment: mockGetPaymentResult,
+          amount: { centAmount: 500, currencyCode: 'GBP' },
+          merchantReference: 'ref',
+        }),
+      ).rejects.toThrow('ct down');
+      expect(updateCtPayment).toHaveBeenCalledTimes(1);
+      expect(updateCtPayment).not.toHaveBeenCalledWith(
+        expect.objectContaining({ transaction: expect.objectContaining({ state: 'Failure' }) }),
+      );
+    });
+
     test('cancel releases the authorization', async () => {
       client.cancelPayment.mockResolvedValue(moneiPayment({ status: 'CANCELED' }));
       const res = await service.cancelPayment({ payment: mockGetPaymentResult });
       expect(client.cancelPayment).toHaveBeenCalledWith(mockGetPaymentResult.interfaceId as string);
+      expect(updateCtPayment).toHaveBeenCalledWith(
+        expect.objectContaining({
+          transaction: expect.objectContaining({ type: 'CancelAuthorization', state: 'Success' }),
+        }),
+      );
       expect(res.outcome).toBe('approved');
     });
 

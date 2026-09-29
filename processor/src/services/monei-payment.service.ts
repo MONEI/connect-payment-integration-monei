@@ -23,7 +23,13 @@ import {
 } from '../libs/fastify/context/context';
 import { log } from '../libs/logger';
 import { getMoneiClient, MoneiClient } from '../libs/monei/client';
-import { MoneiApiError, MoneiCreatePaymentRequest, MoneiPayment, MoneiPaymentMethodType } from '../libs/monei/types';
+import {
+  MoneiApiError,
+  MoneiCreatePaymentRequest,
+  MoneiPayment,
+  MoneiPaymentMethodType,
+  MoneiPaymentStatus,
+} from '../libs/monei/types';
 import { appLogger, paymentSDK } from '../payment-sdk';
 import { AbstractPaymentService } from './abstract-payment.service';
 import {
@@ -181,59 +187,23 @@ export class MoneiPaymentService extends AbstractPaymentService {
 
   public async capturePayment(request: CapturePaymentRequest): Promise<PaymentProviderModificationResponse> {
     const moneiId = this.requireInterfaceId(request.payment);
-    try {
-      const result = await this.moneiClient.capturePayment(moneiId, { amount: request.amount.centAmount });
-      await this.ctPaymentService.updatePayment({
-        id: request.payment.id,
-        transaction: {
-          type: 'Charge',
-          amount: request.amount,
-          interactionId: result.id,
-          state: result.status === 'SUCCEEDED' ? 'Success' : 'Pending',
-        },
-      });
-      return { outcome: PaymentModificationStatus.APPROVED, pspReference: result.id };
-    } catch (e) {
-      return this.rejectedModification(request.payment, 'Charge', request.amount, e);
-    }
+    return this.modify(request.payment, 'Charge', request.amount, ['SUCCEEDED'], () =>
+      this.moneiClient.capturePayment(moneiId, { amount: request.amount.centAmount }),
+    );
   }
 
   public async cancelPayment(request: CancelPaymentRequest): Promise<PaymentProviderModificationResponse> {
     const moneiId = this.requireInterfaceId(request.payment);
-    try {
-      const result = await this.moneiClient.cancelPayment(moneiId);
-      await this.ctPaymentService.updatePayment({
-        id: request.payment.id,
-        transaction: {
-          type: 'CancelAuthorization',
-          amount: request.payment.amountPlanned,
-          interactionId: result.id,
-          state: 'Success',
-        },
-      });
-      return { outcome: PaymentModificationStatus.APPROVED, pspReference: result.id };
-    } catch (e) {
-      return this.rejectedModification(request.payment, 'CancelAuthorization', request.payment.amountPlanned, e);
-    }
+    return this.modify(request.payment, 'CancelAuthorization', request.payment.amountPlanned, ['CANCELED'], () =>
+      this.moneiClient.cancelPayment(moneiId),
+    );
   }
 
   public async refundPayment(request: RefundPaymentRequest): Promise<PaymentProviderModificationResponse> {
     const moneiId = this.requireInterfaceId(request.payment);
-    try {
-      const result = await this.moneiClient.refundPayment(moneiId, { amount: request.amount.centAmount });
-      await this.ctPaymentService.updatePayment({
-        id: request.payment.id,
-        transaction: {
-          type: 'Refund',
-          amount: request.amount,
-          interactionId: result.id,
-          state: 'Success',
-        },
-      });
-      return { outcome: PaymentModificationStatus.APPROVED, pspReference: result.id };
-    } catch (e) {
-      return this.rejectedModification(request.payment, 'Refund', request.amount, e);
-    }
+    return this.modify(request.payment, 'Refund', request.amount, ['REFUNDED', 'PARTIALLY_REFUNDED'], () =>
+      this.moneiClient.refundPayment(moneiId, { amount: request.amount.centAmount }),
+    );
   }
 
   public async reversePayment(request: ReversePaymentRequest): Promise<PaymentProviderModificationResponse> {
@@ -574,6 +544,42 @@ export class MoneiPaymentService extends AbstractPaymentService {
       throw new ErrorInvalidOperation(`Payment ${payment.id} has no MONEI payment id (interfaceId).`);
     }
     return payment.interfaceId;
+  }
+
+  /**
+   * Runs a MONEI modification and records its result. Only a MONEI error or a FAILED result is a rejection;
+   * a commercetools write error propagates, because MONEI has already applied the operation.
+   */
+  private async modify(
+    payment: Payment,
+    type: TransactionType,
+    amount: { centAmount: number; currencyCode: string },
+    approvedStatuses: MoneiPaymentStatus[],
+    call: () => Promise<MoneiPayment>,
+  ): Promise<PaymentProviderModificationResponse> {
+    let result: MoneiPayment;
+    try {
+      result = await call();
+    } catch (e) {
+      return this.rejectedModification(payment, type, amount, e);
+    }
+
+    const state: TransactionState = approvedStatuses.includes(result.status)
+      ? 'Success'
+      : result.status === 'FAILED'
+        ? 'Failure'
+        : 'Pending';
+    await this.ctPaymentService.updatePayment({
+      id: payment.id,
+      transaction: { type, amount, interactionId: result.id, state },
+    });
+    const outcome =
+      state === 'Success'
+        ? PaymentModificationStatus.APPROVED
+        : state === 'Failure'
+          ? PaymentModificationStatus.REJECTED
+          : PaymentModificationStatus.RECEIVED;
+    return { outcome, pspReference: result.id };
   }
 
   private async rejectedModification(
