@@ -15,6 +15,8 @@ Card data is collected by **MONEI.js** inside MONEI-hosted iframes and never tou
 
 `isAvailable()` hides Bizum outside `ES`/`AD` when Checkout passes `countryCode`, and hides wallets the browser cannot show.
 
+`applePay` and `googlePay` both render MONEI.js `PaymentRequest`, which shows the wallet the device supports. If you mount both components, the same button shows twice. Mount only one of them.
+
 ## How it talks to the processor
 
 All calls carry `X-Session-Id`. The enabler never sees amounts from the page: `GET /payment-amount` returns the session cart's amount for the wallet / Bizum buttons, and `POST /payments` derives everything else server-side.
@@ -40,6 +42,7 @@ Return URL: the enabler sends the current page URL with `ctPaymentReference={pay
 
 ```bash
 npm install
+npm run lint
 npm test        # jest, no DOM needed
 npm run build   # tsc + vite → public/
 ```
