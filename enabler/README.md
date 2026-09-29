@@ -1,75 +1,50 @@
-# MONEI Payment Enabler
+# MONEI payment connector — enabler
 
-Frontend library for the MONEI commercetools Connect payment integration.
+Browser library for commercetools Checkout (and custom storefronts) built on the payment-integration template's `Enabler` contract: `createComponentBuilder`, `createDropinBuilder`, `isAvailable`, `submit`, `onComplete`. Bundles: `public/monei-enabler.umd.js` (global `Enabler`) and `public/monei-enabler.es.js`.
 
-## Overview
-
-The enabler wraps MONEI's payment UI components and exposes them to commercetools Checkout or custom frontend applications. It serves as static assets that Checkout loads when rendering payment methods.
+Card data is collected by **MONEI.js** inside MONEI-hosted iframes and never touches the page (SAQ A). MONEI.js is always loaded from `https://js.monei.com/v3/monei.js`, never bundled.
 
 ## Components
 
-| Component | Description | Type |
-|-----------|-------------|------|
-| `CardComponent` | PCI-compliant card input (number, expiry, CVC) via MONEI.js iframe | Web component |
-| `BizumComponent` | "Pay with Bizum" button with redirect flow | Redirect |
-| `GooglePayComponent` | Google Pay button via MONEI.js | Web component |
-| `ApplePayComponent` | Apple Pay button (Safari/iOS only) | Web component |
-| `SepaDirectDebitComponent` | IBAN input with mandate text | Form input |
+| Type | Renders | Submit | Flow |
+|---|---|---|---|
+| `card` | MONEI.js `CardInput` (iframe) | Checkout button or own button | tokenise in browser → `POST /payments` with token → 3DS challenge redirect if MONEI asks |
+| `bizum` | MONEI.js `Bizum` request-to-pay button, or own "Pay with Bizum" button with `showPayButton` | own button / Checkout | token (RTP) or redirect; back on the return URL the enabler confirms with the processor |
+| `applePay` / `googlePay` | MONEI.js `PaymentRequest` | the wallet sheet (`componentHasSubmit=false`) | wallet token → `POST /payments` |
+| drop-in `embedded` | card + Bizum in one block | Checkout | as above |
 
-## Usage with commercetools Checkout
+`isAvailable()` hides Bizum outside `ES`/`AD` when Checkout passes `countryCode`, and hides wallets the browser cannot show.
 
-The enabler is automatically loaded by Checkout based on merchant configuration. No additional setup is required on the frontend.
+`applePay` and `googlePay` both render MONEI.js `PaymentRequest`, which shows the wallet the device supports. If you mount both components, the same button shows twice. Mount only one of them.
 
-## Usage with custom frontend
+## How it talks to the processor
 
-```typescript
-import MoneiPaymentEnabler from './monei-enabler';
+All calls carry `X-Session-Id`. The enabler never sees amounts from the page: `GET /payment-amount` returns the session cart's amount for the wallet / Bizum buttons, and `POST /payments` derives everything else server-side.
 
-const enabler = new MoneiPaymentEnabler();
+Return URL: the enabler sends the current page URL with `ctPaymentReference={paymentReference}`; the processor substitutes the commercetools Payment id before passing it to MONEI. On load, if that parameter is present, the enabler calls `GET /payments/:id`, which syncs the Payment with MONEI, and fires `onComplete`.
 
-// Initialize with processor URL and session
-await enabler.init({
-  processorUrl: 'https://your-processor-url.com',
-  sessionId: 'session-token-from-checkout',
-  locale: 'es',
-});
+## Usage
 
-// Create and mount a card component
-const card = enabler.createComponent('card');
-card.mount('#card-container');
-
-// Create and mount Bizum
-const bizum = enabler.createComponent('bizum');
-bizum.mount('#bizum-container');
-
-// Submit payment
-const result = await card.submit();
-if (result.redirectUrl) {
-  window.location.href = result.redirectUrl;
-} else if (result.isSuccess) {
-  // Payment completed
-}
+```html
+<script src="https://assets-<connector>.<region>.commercetools.app/monei-enabler.umd.js"></script>
+<script>
+  const enabler = new Enabler({
+    processorUrl, sessionId, locale: 'es-ES', countryCode: 'ES',
+    onComplete: ({ isSuccess, paymentReference }) => { /* create the Order server-side on webhook, not here */ },
+    onError: (err) => console.error(err),
+  });
+  const bizum = (await enabler.createComponentBuilder('bizum')).build({ showPayButton: true });
+  await bizum.mount('#bizum');
+</script>
 ```
 
 ## Development
 
 ```bash
-cp .env.template .env
 npm install
-npm run dev
+npm run lint
+npm test        # jest, no DOM needed
+npm run build   # tsc + vite → public/
 ```
 
-Opens at `http://localhost:3000` with a test page showing all payment components.
-
-## Building
-
-```bash
-npm run build
-```
-
-Outputs `dist/monei-enabler.js` as a UMD bundle.
-
-## Dependencies
-
-- **MONEI.js** (`https://js.monei.com/v3/monei.js`): Secure payment components library loaded at runtime
-- **@monei-js/components**: TypeScript types for MONEI.js components
+Not yet supported: stored payment methods, express checkout, SEPA Direct Debit component.

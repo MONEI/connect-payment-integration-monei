@@ -1,33 +1,50 @@
 {
-  "name": "monei-commercetools-enabler",
-  "version": "1.0.0",
-  "description": "MONEI payment enabler for commercetools Connect - frontend components",
-  "main": "dist/index.js",
+  "name": "connect-payment-integration-monei-enabler",
+  "private": true,
+  "version": "4.10.0",
+  "type": "module",
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack serve --mode development",
-    "test": "jest",
-    "lint": "eslint src --ext .ts",
-    "lint:fix": "eslint src --ext .ts --fix"
+    "dev": "vite --port 3000",
+    "start": "serve public -l 8080 --cors",
+    "test": "jest --detectOpenHandles",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "serve": "npm run build && serve public -l 3000 --cors",
+    "lint": "eslint src test",
+    "lint:fix": "eslint --fix src test"
   },
-  "dependencies": {},
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "@commercetools-backend/loggers": "27.9.3",
+    "serve": "14.2.6"
+  },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "@typescript-eslint/eslint-plugin": "^8.58.1",
-    "@typescript-eslint/parser": "^8.58.1",
-    "css-loader": "^6.8.0",
-    "eslint": "^8.57.0",
-    "html-webpack-plugin": "^5.5.0",
-    "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
-    "sass": "^1.69.0",
-    "sass-loader": "^16.0.7",
-    "style-loader": "^3.3.0",
-    "ts-jest": "^29.1.0",
-    "ts-loader": "^9.5.0",
-    "typescript": "^6.0.2",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.0",
-    "webpack-dev-server": "^5.2.3"
-  }
+    "@eslint/js": "10.0.1",
+    "@jest/globals": "30.5.1",
+    "@types/node": "24.13.3",
+    "eslint": "10.10.0",
+    "globals": "17.12.0",
+    "jest": "30.5.1",
+    "sass": "1.104.0",
+    "ts-jest": "29.4.12",
+    "ts-node": "10.9.2",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.70.0",
+    "vite": "8.2.2",
+    "vite-plugin-css-injected-by-js": "5.0.2"
+  },
+  "overrides": {
+    "@babel/core": "7.29.7",
+    "path-to-regexp": "3.3.0",
+    "lodash": "4.18.1",
+    "brace-expansion@^1": "1.1.18",
+    "brace-expansion@^2": "2.1.4",
+    "picomatch": "2.3.2",
+    "js-yaml@^3.13.1": "3.15.2"
+  },
+  "description": "MONEI enabler for commercetools Checkout: Bizum, cards (MONEI.js iframes), Apple Pay, Google Pay",
+  "license": "MIT"
 }

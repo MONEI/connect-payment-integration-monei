@@ -9,17 +9,22 @@ This repository provides a [commercetools Connect](https://docs.commercetools.co
 
 [MONEI](https://monei.com) is a Payment Institution licensed by the Banco de España (reg. #6911), providing API-first payment infrastructure for online and in-store commerce across Spain and Europe.
 
-This connector follows the [commercetools payment integration template](https://docs.commercetools.com/connect/templates/payment-integration) pattern and is compatible with [commercetools Checkout](https://docs.commercetools.com/checkout).
+The processor and enabler are built on the [commercetools payment integration template](https://docs.commercetools.com/connect/templates/payment-integration) (`@commercetools/connect-payments-sdk`, Checkout `Enabler` contract).
+
+> [!WARNING]
+> The connector is covered by unit tests only. It has not been verified end to end against a commercetools project, with [commercetools Checkout](https://docs.commercetools.com/checkout), or with live MONEI payments, and it is not certified on the Connect Marketplace. Deploy it from this repository with the Connect CLI.
 
 ### Supported payment methods
 
-| Method | Type | Capture | Refund | Cancel |
-|--------|------|---------|--------|--------|
-| Card (Visa, Mastercard) | Web component | Manual / Auto | ✅ | ✅ |
-| Bizum | Redirect | Auto | ✅ | ✅ |
-| Apple Pay | Web component | Auto | ✅ | ✅ |
-| Google Pay | Web component | Auto | ✅ | ✅ |
-| SEPA Direct Debit | Form input | Auto | ✅ | N/A |
+| Method | Enabler component | Authorize, then capture (`AUTH`) | Refund |
+|--------|-------------------|----------------------------------|--------|
+| Card (Visa, Mastercard) | MONEI.js card input | Yes | Yes |
+| Bizum | MONEI.js Bizum button, or redirect | Yes | Yes |
+| Apple Pay | MONEI.js payment request button | Yes | Yes |
+| Google Pay | MONEI.js payment request button | Yes | Yes |
+| SEPA Direct Debit | None (processor only) | No | Yes |
+
+`MONEI_TRANSACTION_TYPE` sets `SALE` (charge at once, the default) or `AUTH` for the whole deployment. You cancel an authorization, or capture it, through `/operations/payment-intents/:id`.
 
 ### Key features
 
@@ -33,7 +38,7 @@ The connector contains two applications:
 
 | Application | Type | Description |
 |-------------|------|-------------|
-| **Enabler** | `assets` | Frontend library wrapping MONEI payment UI components (card input, Bizum button, wallet buttons). Served as static assets to commercetools Checkout or custom frontends. |
+| **Enabler** | `assets` | Checkout `Enabler` implementation over MONEI.js: card (hosted iframes), Bizum (request-to-pay or redirect), Apple Pay / Google Pay, embedded drop-in. Bundle `monei-enabler.umd.js`, global `Enabler`. |
 | **Processor** | `service` | Backend service orchestrating payment operations with the [MONEI Payments API](https://docs.monei.com/api). Handles payment creation, capture, refund, cancellation, and webhook event processing. |
 
 Both applications can be hosted on Connect or on alternative platforms, and can be used together with [Checkout](https://docs.commercetools.com/checkout) or in custom frontend applications.
@@ -54,8 +59,6 @@ Create an API client with the following scopes:
 - `view_api_clients`
 - `manage_checkout_payment_intents`
 - `introspect_oauth_tokens`
-- `manage_types`
-- `view_types`
 
 ### 3. commercetools platform URLs
 
@@ -79,20 +82,17 @@ Edit the `.env` files with your MONEI and commercetools credentials.
 ### 2. Local development
 
 ```bash
-docker compose up
+cd processor && npm install && npm run dev   # backend API at http://localhost:8080
+cd enabler && npm install && npm run dev     # enabler test page at http://localhost:3000
 ```
 
-This starts three services:
-
-1. **JWT Server** — local authentication for development
-2. **Enabler** — frontend components at `http://localhost:3000`
-3. **Processor** — backend API at `http://localhost:8080`
+The processor needs a real commercetools project and a MONEI test account: session routes check the session against the commercetools Session API.
 
 ### 3. Run tests
 
 ```bash
-cd processor && npm test
-cd enabler && npm test
+cd processor && npm run lint && npm test
+cd enabler && npm run lint && npm test
 ```
 
 ## Deployment configuration
@@ -103,25 +103,23 @@ The deployment configuration is specified in [`connect.yaml`](./connect.yaml). B
 |----------|-------------|----------|---------|
 | `MONEI_API_KEY` | MONEI API key from [Dashboard](https://dashboard.monei.com/settings/api) | Yes | Yes |
 | `MONEI_ACCOUNT_ID` | MONEI merchant account ID | Yes | No |
-| `MONEI_WEBHOOK_SECRET` | HMAC key for webhook signature verification | Yes | Yes |
 | `MONEI_ENVIRONMENT` | `test` or `live` | Yes | No |
-| `MONEI_PAYMENT_METHODS_ENABLED` | Comma-separated list: `bizum,card,applePay,googlePay,sepaDirectDebit` | No | No |
+| `MONEI_PAYMENT_METHODS_ENABLED` | Comma-separated list. Default `bizum,card,applePay,googlePay`. `sepaDirectDebit` is accepted by the processor, but the enabler has no SEPA component. | No | No |
+| `MONEI_TRANSACTION_TYPE` | `SALE` (default) or `AUTH` | No | No |
+| `MERCHANT_RETURN_URL` | Where the shopper returns after a redirect (Bizum, 3DS) when neither the enabler nor the commercetools session gives a return URL | No | No |
+| `MONEI_WEBHOOK_TOLERANCE_SECONDS` | Maximum age of a webhook signature timestamp. `0` (default) disables the check, like the MONEI SDKs | No | No |
 
 For the full list of commercetools configuration variables, see [`connect.yaml`](./connect.yaml).
 
 ## Webhook configuration
 
-The processor exposes a webhook endpoint at `/webhooks/monei` for receiving payment status notifications from MONEI.
+The processor receives MONEI payment updates at `/webhooks/monei`. It sets this URL as the `callbackUrl` of every payment it creates, so no Dashboard setup is needed.
 
-1. Go to [MONEI Dashboard → Settings → Webhooks](https://dashboard.monei.com/settings/webhooks)
-2. Add the webhook URL: `https://<your-processor-url>/webhooks/monei`
-3. Copy the HMAC signing key and set it as `MONEI_WEBHOOK_SECRET`
-
-All incoming webhooks are verified using HMAC-SHA256 signatures before processing.
+MONEI signs each request with your API key. The processor verifies the `MONEI-Signature` header (HMAC-SHA256 over the raw body) with `MONEI_API_KEY` and rejects unsigned or tampered requests with `401`.
 
 ## Currencies
 
-MONEI follows the [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) standard. commercetools provides monetary values in cent amounts (e.g., €1.50 = `150`). The connector handles conversion automatically using utilities from [connect-payments-sdk](https://github.com/commercetools/connect-payments-sdk).
+MONEI and commercetools both express amounts in the minor unit of an [ISO 4217](https://en.wikipedia.org/wiki/ISO_4217) currency (for example, €1.50 = `150`). The processor sends the commercetools cart amount to MONEI unchanged.
 
 ## Deployment
 
