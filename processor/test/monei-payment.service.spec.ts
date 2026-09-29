@@ -375,6 +375,33 @@ describe('MoneiPaymentService', () => {
     });
   });
 
+  describe('getPaymentStatus', () => {
+    const cartWith = (paymentId: string) =>
+      ({
+        ...mockGetCartResult(),
+        paymentInfo: { payments: [{ typeId: 'payment', id: paymentId }] },
+      }) as ReturnType<typeof mockGetCartResult>;
+
+    test('syncs a payment attached to the session cart', async () => {
+      jest.spyOn(DefaultCartService.prototype, 'getCart').mockResolvedValue(cartWith(mockGetPaymentResult.id));
+      jest.spyOn(DefaultPaymentService.prototype, 'getPayment').mockResolvedValue(mockGetPaymentResult);
+      client.getPayment.mockResolvedValue(moneiPayment({ id: 'mp_1', status: 'SUCCEEDED' }));
+      await expect(service.getPaymentStatus(mockGetPaymentResult.id)).resolves.toEqual({
+        moneiPaymentId: 'mp_1',
+        status: 'SUCCEEDED',
+      });
+    });
+
+    test('refuses a payment that is not on the session cart, without calling MONEI', async () => {
+      // A shopper session must not read or sync another shopper's payment by guessing its id.
+      jest.spyOn(DefaultCartService.prototype, 'getCart').mockResolvedValue(cartWith('other-payment'));
+      const getCtPayment = jest.spyOn(DefaultPaymentService.prototype, 'getPayment');
+      await expect(service.getPaymentStatus(mockGetPaymentResult.id)).rejects.toThrow();
+      expect(getCtPayment).not.toHaveBeenCalled();
+      expect(client.getPayment).not.toHaveBeenCalled();
+    });
+  });
+
   describe('getPaymentAmount', () => {
     test('returns the session cart amount from commercetools', async () => {
       await expect(service.getPaymentAmount()).resolves.toEqual({

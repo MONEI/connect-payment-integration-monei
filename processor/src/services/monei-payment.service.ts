@@ -3,6 +3,7 @@ import {
   ErrorGeneral,
   ErrorInvalidField,
   ErrorInvalidOperation,
+  ErrorResourceNotFound,
   healthCheckCommercetoolsPermissions,
   statusHandler,
   TransactionState,
@@ -345,6 +346,11 @@ export class MoneiPaymentService extends AbstractPaymentService {
 
   /** Polling fallback for the return page: re-reads MONEI and syncs the CT Payment if the webhook is late. */
   public async getPaymentStatus(ctPaymentId: string): Promise<{ moneiPaymentId: string; status: string }> {
+    const ctCart = await this.ctCartService.getCart({ id: getCartIdFromContext() });
+    if (!ctCart.paymentInfo?.payments.some((p) => p.id === ctPaymentId)) {
+      // Only payments of the session's own cart are readable.
+      throw new ErrorResourceNotFound(ctPaymentId);
+    }
     const ctPayment = await this.ctPaymentService.getPayment({ id: ctPaymentId });
     const moneiId = this.requireInterfaceId(ctPayment);
     const moneiPayment = await this.moneiClient.getPayment(moneiId);
