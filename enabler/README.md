@@ -71,5 +71,5 @@ Outputs `dist/monei-enabler.js` as a UMD bundle.
 
 ## Dependencies
 
-- **MONEI.js** (`https://js.monei.com/v2/monei.js`): Secure payment components library loaded at runtime
+- **MONEI.js** (`https://js.monei.com/v3/monei.js`): Secure payment components library loaded at runtime
 - **@monei-js/components**: TypeScript types for MONEI.js components

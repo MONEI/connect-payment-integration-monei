@@ -100,7 +100,7 @@ export class MoneiPaymentEnabler implements PaymentEnabler {
       }
 
       const script = document.createElement('script');
-      script.src = 'https://js.monei.com/v2/monei.js';
+      script.src = 'https://js.monei.com/v3/monei.js';
       script.async = true;
 
       script.onload = () => {
