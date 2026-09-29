@@ -50,8 +50,8 @@ deployAs:
           description: 'Comma-separated list of enabled payment methods. Available: bizum,card,applePay,googlePay,sepaDirectDebit'
           required: false
           default: bizum,card,applePay,googlePay
-        - key: RETURN_URL
-          description: Fallback URL the shopper returns to after a redirect payment method (Bizum, 3DS challenge) when the enabler does not pass its own return URL
+        - key: MERCHANT_RETURN_URL
+          description: Fallback URL the shopper returns to after a redirect (Bizum, 3DS challenge) when neither the enabler nor the commercetools session provides one
           required: false
         - key: MONEI_WEBHOOK_TOLERANCE_SECONDS
           description: Maximum age in seconds accepted for the timestamp in MONEI-Signature. 0 (default) disables the check, matching MONEI's official SDKs.

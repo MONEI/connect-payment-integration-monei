@@ -29,9 +29,9 @@ export const config = {
   // build the per-payment callbackUrl MONEI posts the final payment state to.
   connectServiceUrl: process.env.CONNECT_SERVICE_URL || '',
 
-  // Where the shopper lands after a redirect method (Bizum, 3DS challenge, hosted page) when the
-  // enabler does not provide its own return URL.
-  returnUrl: process.env.RETURN_URL,
+  // Where the shopper lands after a redirect method (Bizum, 3DS challenge, hosted page) when neither
+  // the enabler nor the commercetools session provides a return URL.
+  merchantReturnUrl: process.env.MERCHANT_RETURN_URL,
 
   // env variables related to stored payment methods feature
   storedPaymentMethodsEnabled: process.env.STORED_PAYMENT_METHODS_ENABLED || 'false',

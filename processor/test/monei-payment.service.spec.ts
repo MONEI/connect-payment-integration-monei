@@ -18,7 +18,7 @@ const baseConfig = {
   moneiEnvironment: 'test' as const,
   moneiPaymentMethodsEnabled: 'bizum,card,applePay',
   connectServiceUrl: 'https://processor.example.com',
-  returnUrl: 'https://shop.example.com/return',
+  merchantReturnUrl: 'https://shop.example.com/return',
   storedPaymentMethodsEnabled: 'false',
 };
 
@@ -52,6 +52,7 @@ describe('MoneiPaymentService', () => {
     jest.spyOn(Config, 'getConfig').mockReturnValue(baseConfig);
     jest.spyOn(FastifyContext, 'getCartIdFromContext').mockReturnValue('cart-1');
     jest.spyOn(FastifyContext, 'getCheckoutTransactionItemIdFromContext').mockReturnValue(undefined);
+    jest.spyOn(FastifyContext, 'getMerchantReturnUrlFromContext').mockReturnValue(undefined);
     jest.spyOn(DefaultCartService.prototype, 'getCart').mockResolvedValue(mockGetCartResult());
     jest.spyOn(DefaultCartService.prototype, 'addPayment').mockResolvedValue(mockGetCartResult());
     jest
@@ -131,6 +132,18 @@ describe('MoneiPaymentService', () => {
       expect(client.createPayment.mock.calls[0][0].completeUrl).toBe(
         `https://shop.example.com/return?ctPaymentReference=${mockGetPaymentResultWithoutTransactions.id}`,
       );
+    });
+
+    test('return URL: enabler value, else the session merchant return URL, else MERCHANT_RETURN_URL', async () => {
+      client.createPayment.mockResolvedValue(moneiPayment());
+      const create = () => service.createPayment({ data: { paymentMethod: { type: 'bizum' as never } } });
+
+      await create();
+      expect(client.createPayment.mock.calls[0][0].completeUrl).toBe('https://shop.example.com/return');
+
+      jest.spyOn(FastifyContext, 'getMerchantReturnUrlFromContext').mockReturnValue('https://shop.example.com/session');
+      await create();
+      expect(client.createPayment.mock.calls[1][0].completeUrl).toBe('https://shop.example.com/session');
     });
 
     test('card with MONEI.js token: forwards the token and records a successful Charge', async () => {

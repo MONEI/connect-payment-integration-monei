@@ -16,7 +16,11 @@ import { PaymentMethodType, PaymentRequestSchemaDTO, PaymentResponseSchemaDTO } 
 import { SupportedPaymentComponentsSchemaDTO } from '../dtos/operations/payment-componets.dto';
 import { PaymentModificationStatus } from '../dtos/operations/payment-intents.dto';
 import { TransactionDraftDTO, TransactionResponseDTO } from '../dtos/operations/transaction.dto';
-import { getCartIdFromContext, getCheckoutTransactionItemIdFromContext } from '../libs/fastify/context/context';
+import {
+  getCartIdFromContext,
+  getCheckoutTransactionItemIdFromContext,
+  getMerchantReturnUrlFromContext,
+} from '../libs/fastify/context/context';
 import { log } from '../libs/logger';
 import { getMoneiClient, MoneiClient } from '../libs/monei/client';
 import { MoneiApiError, MoneiCreatePaymentRequest, MoneiPayment, MoneiPaymentMethodType } from '../libs/monei/types';
@@ -506,7 +510,7 @@ export class MoneiPaymentService extends AbstractPaymentService {
     // The enabler does not know the CT payment id when it builds its return URL; it leaves a placeholder.
     const withRef = (url?: string) =>
       url?.replace('{paymentReference}', ctPayment.id).replace('%7BpaymentReference%7D', ctPayment.id);
-    const returnUrl = withRef(data.returnUrl) ?? cfg.returnUrl;
+    const returnUrl = withRef(data.returnUrl ?? getMerchantReturnUrlFromContext() ?? cfg.merchantReturnUrl);
     const cancelUrl = withRef(data.cancelUrl) ?? returnUrl;
 
     return {
