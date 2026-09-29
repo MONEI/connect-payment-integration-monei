@@ -70,7 +70,7 @@ export class CardComponent implements PaymentComponent {
           },
           invalid: { color: '#e24b4a' },
         },
-        onReady: () => {
+        onLoad: () => {
           this.isReady = true;
         },
         onError: (error: any) => {
@@ -103,10 +103,15 @@ export class CardComponent implements PaymentComponent {
 
     try {
       // MONEI.js handles tokenization and 3DS
+      const { token, error } = await this.moneiCardInput.submit();
+      if (error || !token) {
+        return { isSuccess: false, error: error || 'Card tokenization failed' };
+      }
+
       const monei = (window as any).monei;
       const result = await monei.confirmPayment({
         paymentId: this.options.sessionToken,
-        paymentToken: await this.moneiCardInput.getToken(),
+        paymentToken: token,
       });
 
       if (result.status === 'SUCCEEDED' || result.status === 'AUTHORIZED') {
