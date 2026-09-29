@@ -20,7 +20,6 @@ export type CreatePaymentRequest = {
   };
   returnUrl?: string;
   cancelUrl?: string;
-  transactionType?: "SALE" | "AUTH";
 };
 
 export type CreatePaymentResponse = {

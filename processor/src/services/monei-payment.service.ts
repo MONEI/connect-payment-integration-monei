@@ -46,13 +46,8 @@ import { CreatePaymentRequest, MoneiPaymentServiceOptions } from './types/monei-
 
 export const MONEI_PAYMENT_INTERFACE = 'monei';
 
-/** Methods that can only be an immediate sale on MONEI: authorization/capture is not offered for them. */
-const IMMEDIATE_ONLY_METHODS: ReadonlySet<string> = new Set<string>([
-  PaymentMethodType.BIZUM,
-  PaymentMethodType.APPLE_PAY,
-  PaymentMethodType.GOOGLE_PAY,
-  PaymentMethodType.SEPA_DIRECT_DEBIT,
-]);
+/** Methods that MONEI can only charge at once: authorization/capture is not offered for them. */
+const IMMEDIATE_ONLY_METHODS: ReadonlySet<string> = new Set<string>([PaymentMethodType.SEPA_DIRECT_DEBIT]);
 
 /** Statuses at which a MONEI payment will not change again on its own (no further webhook expected). */
 export const FINAL_MONEI_STATUSES: ReadonlySet<string> = new Set([
@@ -469,8 +464,8 @@ export class MoneiPaymentService extends AbstractPaymentService {
   }
 
   private resolveTransactionType(data: PaymentRequestSchemaDTO): 'SALE' | 'AUTH' {
-    if (data.transactionType === 'AUTH' && !IMMEDIATE_ONLY_METHODS.has(data.paymentMethod.type)) return 'AUTH';
-    return 'SALE';
+    if (IMMEDIATE_ONLY_METHODS.has(data.paymentMethod.type)) return 'SALE';
+    return getConfig().moneiTransactionType;
   }
 
   private buildMoneiRequest(args: {

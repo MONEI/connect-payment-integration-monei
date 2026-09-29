@@ -50,6 +50,10 @@ deployAs:
           description: 'Comma-separated list of enabled payment methods. Available: bizum,card,applePay,googlePay,sepaDirectDebit'
           required: false
           default: bizum,card,applePay,googlePay
+        - key: MONEI_TRANSACTION_TYPE
+          description: 'SALE (default) charges at once. AUTH only authorizes cards, Bizum, Apple Pay and Google Pay; capture later through the payment intents API. SEPA Direct Debit is always SALE.'
+          required: false
+          default: SALE
         - key: MERCHANT_RETURN_URL
           description: Fallback URL the shopper returns to after a redirect (Bizum, 3DS challenge) when neither the enabler nor the commercetools session provides one
           required: false

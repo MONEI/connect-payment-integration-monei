@@ -21,8 +21,6 @@ export const PaymentRequestSchema = Type.Object({
   /** Where the shopper lands after a redirect (Bizum, 3DS challenge, hosted page). */
   returnUrl: Type.Optional(Type.String()),
   cancelUrl: Type.Optional(Type.String()),
-  /** SALE (default) or AUTH. AUTH only applies to cards; ignored for other methods. */
-  transactionType: Type.Optional(Type.Union([Type.Literal('SALE'), Type.Literal('AUTH')])),
 });
 
 export const PaymentResponseSchema = Type.Object({

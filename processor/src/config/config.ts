@@ -1,3 +1,11 @@
+function parseTransactionType(value: string | undefined): 'SALE' | 'AUTH' {
+  const type = (value || 'SALE').trim().toUpperCase();
+  if (type !== 'SALE' && type !== 'AUTH') {
+    throw new Error(`MONEI_TRANSACTION_TYPE must be SALE or AUTH, got "${value}"`);
+  }
+  return type;
+}
+
 export const config = {
   // Required by Payment SDK
   projectKey: process.env.CTP_PROJECT_KEY || 'payment-integration',
@@ -20,6 +28,8 @@ export const config = {
   moneiEnvironment: (process.env.MONEI_ENVIRONMENT || 'test') as 'test' | 'live',
   moneiApiUrl: process.env.MONEI_API_URL || 'https://api.monei.com/v1',
   moneiPaymentMethodsEnabled: process.env.MONEI_PAYMENT_METHODS_ENABLED || 'bizum,card,applePay,googlePay',
+  /** SALE charges at once; AUTH only authorizes, and the merchant captures later through payment intents. */
+  moneiTransactionType: parseTransactionType(process.env.MONEI_TRANSACTION_TYPE),
   /** Seconds of clock skew tolerated on the `t=` part of MONEI-Signature. 0 = not enforced (MONEI SDK behaviour). */
   moneiWebhookToleranceSeconds: parseInt(process.env.MONEI_WEBHOOK_TOLERANCE_SECONDS || '0'),
 

@@ -19,7 +19,6 @@ export class BizumBuilder implements PaymentComponentBuilder {
  *    customer approves in their bank app; the token goes to the processor as for cards.
  *  - redirect: with showPayButton (Checkout's own button flow) the processor creates the payment and MONEI
  *    answers with a redirectUrl; the shopper comes back to the return URL and the enabler reports the outcome.
- * Bizum is always an immediate sale; there is no authorize/capture.
  */
 export class Bizum extends BaseComponent {
   private button?: MoneiComponent;

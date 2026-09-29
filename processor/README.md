@@ -22,7 +22,7 @@ Fastify service built on [commercetools' payment-integration template](https://g
 4. For Bizum and 3DS challenges the enabler redirects the shopper to `redirectUrl`. When the payment reaches a final state MONEI posts it to `/webhooks/monei`; the processor verifies the signature on the raw bytes, finds the Payment by `interfaceId` (falling back to `orderId`) and adds the resulting transaction unless it is already there.
 5. Capture, cancel and refund come in through `/operations/payment-intents` and go out to MONEI before the Payment is updated; MONEI-side failures are recorded as `Failure` transactions and reported as `rejected`.
 
-`transactionType: AUTH` is honoured for cards only; Bizum, wallets and SEPA are always immediate sales.
+`MONEI_TRANSACTION_TYPE` (`SALE` by default, or `AUTH`) applies to cards, Bizum, Apple Pay and Google Pay. SEPA Direct Debit is always a sale.
 
 ## Configuration
 

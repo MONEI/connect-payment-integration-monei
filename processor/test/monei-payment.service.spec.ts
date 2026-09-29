@@ -20,6 +20,7 @@ const baseConfig = {
   connectServiceUrl: 'https://processor.example.com',
   merchantReturnUrl: 'https://shop.example.com/return',
   storedPaymentMethodsEnabled: 'false',
+  moneiTransactionType: 'SALE' as const,
 };
 
 const moneiPayment = (over: Partial<MoneiPayment> = {}): MoneiPayment => ({
@@ -161,17 +162,29 @@ describe('MoneiPaymentService', () => {
       expect(res.status).toBe('SUCCEEDED');
     });
 
-    test('AUTH is honoured for cards and silently downgraded to SALE for Bizum', async () => {
+    test('MONEI_TRANSACTION_TYPE=AUTH authorizes cards and Bizum, and records an Authorization', async () => {
+      jest.spyOn(Config, 'getConfig').mockReturnValue({ ...baseConfig, moneiTransactionType: 'AUTH' });
       client.createPayment.mockResolvedValue(moneiPayment({ status: 'AUTHORIZED', transactionType: 'AUTH' }));
-      await service.createPayment({ data: { paymentMethod: { type: 'card' as never }, transactionType: 'AUTH' } });
+
+      await service.createPayment({ data: { paymentMethod: { type: 'card' as never } } });
       expect(client.createPayment.mock.calls[0][0].transactionType).toBe('AUTH');
       expect(updateCtPayment).toHaveBeenLastCalledWith(
         expect.objectContaining({ transaction: expect.objectContaining({ type: 'Authorization', state: 'Success' }) }),
       );
 
+      await service.createPayment({ data: { paymentMethod: { type: 'bizum' as never } } });
+      expect(client.createPayment.mock.calls[1][0].transactionType).toBe('AUTH');
+    });
+
+    test('SEPA Direct Debit is always a SALE, because MONEI cannot authorize it', async () => {
+      jest.spyOn(Config, 'getConfig').mockReturnValue({
+        ...baseConfig,
+        moneiTransactionType: 'AUTH',
+        moneiPaymentMethodsEnabled: 'sepaDirectDebit',
+      });
       client.createPayment.mockResolvedValue(moneiPayment());
-      await service.createPayment({ data: { paymentMethod: { type: 'bizum' as never }, transactionType: 'AUTH' } });
-      expect(client.createPayment.mock.calls[1][0].transactionType).toBe('SALE');
+      await service.createPayment({ data: { paymentMethod: { type: 'sepaDirectDebit' as never } } });
+      expect(client.createPayment.mock.calls[0][0].transactionType).toBe('SALE');
     });
 
     test('SEPA Direct Debit is sent to MONEI as `sepa`', async () => {
