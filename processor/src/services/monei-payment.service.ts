@@ -102,6 +102,10 @@ export function mapMoneiStatusToTransaction(
   }
 }
 
+/** MONEI names SEPA Direct Debit `sepa`; every other connector method name matches MONEI's. */
+const toMoneiPaymentMethod = (type: PaymentMethodType): MoneiPaymentMethodType =>
+  type === PaymentMethodType.SEPA_DIRECT_DEBIT ? 'sepa' : type;
+
 export class MoneiPaymentService extends AbstractPaymentService {
   private readonly moneiClient: MoneiClient;
 
@@ -494,7 +498,7 @@ export class MoneiPaymentService extends AbstractPaymentService {
       currency: ctPayment.amountPlanned.currencyCode,
       orderId: ctPayment.id,
       description: `commercetools cart ${ctCart.id}`,
-      allowedPaymentMethods: [data.paymentMethod.type as MoneiPaymentMethodType],
+      allowedPaymentMethods: [toMoneiPaymentMethod(data.paymentMethod.type)],
       transactionType,
       ...(data.paymentMethod.paymentToken && {
         paymentToken: data.paymentMethod.paymentToken,

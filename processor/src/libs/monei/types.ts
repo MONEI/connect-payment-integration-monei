@@ -14,7 +14,7 @@ export type MoneiPaymentStatus =
 
 export type MoneiTransactionType = 'SALE' | 'AUTH';
 
-export type MoneiPaymentMethodType = 'card' | 'bizum' | 'applePay' | 'googlePay' | 'sepaDirectDebit';
+export type MoneiPaymentMethodType = 'card' | 'bizum' | 'applePay' | 'googlePay' | 'sepa';
 
 export interface MoneiAddress {
   line1?: string;

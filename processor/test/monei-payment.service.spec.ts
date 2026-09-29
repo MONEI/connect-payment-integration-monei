@@ -174,6 +174,13 @@ describe('MoneiPaymentService', () => {
       expect(client.createPayment.mock.calls[1][0].transactionType).toBe('SALE');
     });
 
+    test('SEPA Direct Debit is sent to MONEI as `sepa`', async () => {
+      jest.spyOn(Config, 'getConfig').mockReturnValue({ ...baseConfig, moneiPaymentMethodsEnabled: 'sepaDirectDebit' });
+      client.createPayment.mockResolvedValue(moneiPayment());
+      await service.createPayment({ data: { paymentMethod: { type: 'sepaDirectDebit' as never } } });
+      expect(client.createPayment.mock.calls[0][0].allowedPaymentMethods).toEqual(['sepa']);
+    });
+
     test('rejects a method that is not enabled on the connector', async () => {
       await expect(
         service.createPayment({ data: { paymentMethod: { type: 'sepaDirectDebit' as never } } }),
