@@ -121,7 +121,6 @@ export class MoneiPaymentService extends AbstractPaymentService {
       'view_api_clients',
       'manage_orders',
       'introspect_oauth_tokens',
-      'manage_types',
       'manage_checkout_payment_intents',
     ];
 

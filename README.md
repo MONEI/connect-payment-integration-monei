@@ -54,8 +54,6 @@ Create an API client with the following scopes:
 - `view_api_clients`
 - `manage_checkout_payment_intents`
 - `introspect_oauth_tokens`
-- `manage_types`
-- `view_types`
 
 ### 3. commercetools platform URLs
 
