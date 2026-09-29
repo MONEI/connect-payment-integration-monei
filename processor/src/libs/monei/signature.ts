@@ -33,8 +33,8 @@ export interface VerifyMoneiSignatureOptions {
   /** Raw request body bytes exactly as received. Never a re-serialised object. */
   rawBody: Buffer | string;
   header: string | undefined | null;
-  /** One or more HMAC keys to try. MONEI signs per-payment callbacks with the account API key. */
-  secrets: string | string[];
+  /** MONEI API key; MONEI signs webhooks with it. */
+  apiKey: string;
   /** Allowed clock skew in seconds. 0 disables the check, matching MONEI's official SDKs (the default). */
   toleranceSeconds?: number;
   now?: () => number;
@@ -42,13 +42,11 @@ export interface VerifyMoneiSignatureOptions {
 
 /**
  * Verifies a MONEI webhook signature. The signed payload is `${t}.${rawBody}`, HMAC-SHA256 keyed with the
- * account API key (or a dedicated webhook signing key), hex-encoded, compared in constant time. This is the
- * scheme documented at https://docs.monei.com/guides/verify-signature and implemented by @monei-js/node-sdk.
+ * account API key, hex-encoded, compared in constant time. This is the scheme documented at https://docs.monei.com/guides/verify-signature and implemented by @monei-js/node-sdk.
  */
 export function verifyMoneiSignature(opts: VerifyMoneiSignatureOptions): boolean {
   const parsed = parseMoneiSignature(opts.header);
-  const secrets = (Array.isArray(opts.secrets) ? opts.secrets : [opts.secrets]).filter((s) => !!s);
-  if (!parsed || secrets.length === 0) return false;
+  if (!parsed || !opts.apiKey) return false;
 
   const tolerance = opts.toleranceSeconds ?? 0;
   if (tolerance > 0) {
@@ -58,13 +56,10 @@ export function verifyMoneiSignature(opts: VerifyMoneiSignatureOptions): boolean
 
   const body = Buffer.isBuffer(opts.rawBody) ? opts.rawBody : Buffer.from(opts.rawBody, 'utf8');
 
-  return secrets.some((secret) => {
-    const expected = createHmac('sha256', secret).update(`${parsed.timestamp}.`).update(body).digest('hex');
-    const expectedBuf = Buffer.from(expected, 'hex');
-    return parsed.v1.some((candidate) => {
-      if (!/^[0-9a-f]+$/i.test(candidate) || candidate.length % 2 !== 0) return false;
-      const candidateBuf = Buffer.from(candidate, 'hex');
-      return candidateBuf.length === expectedBuf.length && timingSafeEqual(candidateBuf, expectedBuf);
-    });
+  const expected = createHmac('sha256', opts.apiKey).update(`${parsed.timestamp}.`).update(body).digest();
+  return parsed.v1.some((candidate) => {
+    if (!/^[0-9a-f]+$/i.test(candidate) || candidate.length % 2 !== 0) return false;
+    const candidateBuf = Buffer.from(candidate, 'hex');
+    return candidateBuf.length === expected.length && timingSafeEqual(candidateBuf, expected);
   });
 }

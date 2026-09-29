@@ -73,6 +73,3 @@ deployAs:
         - key: MONEI_API_KEY
           description: MONEI API key for authenticating requests to MONEI platform
           required: true
-        - key: MONEI_WEBHOOK_SECRET
-          description: Optional dedicated signing key for account-level webhooks. Per-payment callbacks are signed with MONEI_API_KEY, which is always accepted.
-          required: false

@@ -17,8 +17,6 @@ export const config = {
   // MONEI
   moneiApiKey: process.env.MONEI_API_KEY || '',
   moneiAccountId: process.env.MONEI_ACCOUNT_ID || '',
-  /** Optional dedicated signing key. Per-payment callbacks are signed with the API key, which is always tried. */
-  moneiWebhookSecret: process.env.MONEI_WEBHOOK_SECRET || '',
   moneiEnvironment: (process.env.MONEI_ENVIRONMENT || 'test') as 'test' | 'live',
   moneiApiUrl: process.env.MONEI_API_URL || 'https://api.monei.com/v1',
   moneiPaymentMethodsEnabled: process.env.MONEI_PAYMENT_METHODS_ENABLED || 'bizum,card,applePay,googlePay',

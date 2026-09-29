@@ -28,7 +28,7 @@ export const webhookRoutes = async (fastify: FastifyInstance, opts: FastifyPlugi
     const valid = verifyMoneiSignature({
       rawBody,
       header: Array.isArray(header) ? header[0] : header,
-      secrets: [cfg.moneiWebhookSecret, cfg.moneiApiKey],
+      apiKey: cfg.moneiApiKey,
       toleranceSeconds: cfg.moneiWebhookToleranceSeconds,
     });
 

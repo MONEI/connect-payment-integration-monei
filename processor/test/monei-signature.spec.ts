@@ -26,44 +26,37 @@ describe('verifyMoneiSignature', () => {
   const t = 1700000000;
 
   test('accepts a signature computed with the API key over the raw body', () => {
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: KEY })).toBe(true);
+    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), apiKey: KEY })).toBe(true);
   });
 
   test('accepts the raw body as a Buffer', () => {
-    expect(verifyMoneiSignature({ rawBody: Buffer.from(body), header: sign(t, body), secrets: [KEY] })).toBe(true);
-  });
-
-  test('tries every provided secret (dedicated signing key, then API key)', () => {
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: ['other', KEY] })).toBe(true);
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: ['', KEY] })).toBe(true);
+    expect(verifyMoneiSignature({ rawBody: Buffer.from(body), header: sign(t, body), apiKey: KEY })).toBe(true);
   });
 
   test('rejects a re-serialised body that differs by whitespace', () => {
     const pretty = JSON.stringify(JSON.parse(body), null, 2);
-    expect(verifyMoneiSignature({ rawBody: pretty, header: sign(t, body), secrets: KEY })).toBe(false);
+    expect(verifyMoneiSignature({ rawBody: pretty, header: sign(t, body), apiKey: KEY })).toBe(false);
   });
 
   test('rejects the wrong key, a tampered body and a tampered timestamp', () => {
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body, 'nope'), secrets: KEY })).toBe(false);
-    expect(verifyMoneiSignature({ rawBody: body.replace('499', '1'), header: sign(t, body), secrets: KEY })).toBe(
-      false,
-    );
+    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body, 'nope'), apiKey: KEY })).toBe(false);
+    expect(verifyMoneiSignature({ rawBody: body.replace('499', '1'), header: sign(t, body), apiKey: KEY })).toBe(false);
     const header = sign(t, body).replace(`t=${t}`, `t=${t + 1}`);
-    expect(verifyMoneiSignature({ rawBody: body, header, secrets: KEY })).toBe(false);
+    expect(verifyMoneiSignature({ rawBody: body, header, apiKey: KEY })).toBe(false);
   });
 
-  test('rejects when no secret is configured', () => {
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: [] })).toBe(false);
+  test('rejects when no API key is configured', () => {
+    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), apiKey: '' })).toBe(false);
   });
 
   test('does not enforce timestamp tolerance by default, enforces it when asked', () => {
     const now = () => (t + 3600) * 1000;
-    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: KEY, now })).toBe(true);
+    expect(verifyMoneiSignature({ rawBody: body, header: sign(t, body), apiKey: KEY, now })).toBe(true);
     expect(
-      verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: KEY, now, toleranceSeconds: 300 }),
+      verifyMoneiSignature({ rawBody: body, header: sign(t, body), apiKey: KEY, now, toleranceSeconds: 300 }),
     ).toBe(false);
     expect(
-      verifyMoneiSignature({ rawBody: body, header: sign(t, body), secrets: KEY, now, toleranceSeconds: 7200 }),
+      verifyMoneiSignature({ rawBody: body, header: sign(t, body), apiKey: KEY, now, toleranceSeconds: 7200 }),
     ).toBe(true);
   });
 });

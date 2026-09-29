@@ -26,7 +26,7 @@ Fastify service built on [commercetools' payment-integration template](https://g
 
 ## Configuration
 
-See `connect.yaml` at the repository root. MONEI-specific keys: `MONEI_API_KEY` (secured), `MONEI_ACCOUNT_ID`, `MONEI_ENVIRONMENT`, `MONEI_PAYMENT_METHODS_ENABLED`, optional `MONEI_WEBHOOK_SECRET`, `MONEI_WEBHOOK_TOLERANCE_SECONDS`, `MERCHANT_RETURN_URL`. `CONNECT_SERVICE_URL` is injected by Connect and used to build the callback URL.
+See `connect.yaml` at the repository root. MONEI-specific keys: `MONEI_API_KEY` (secured), `MONEI_ACCOUNT_ID`, `MONEI_ENVIRONMENT`, `MONEI_PAYMENT_METHODS_ENABLED`, `MONEI_WEBHOOK_TOLERANCE_SECONDS`, `MERCHANT_RETURN_URL`. `CONNECT_SERVICE_URL` is injected by Connect and used to build the callback URL.
 
 ## Development
 

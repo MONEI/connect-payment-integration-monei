@@ -101,7 +101,6 @@ The deployment configuration is specified in [`connect.yaml`](./connect.yaml). B
 |----------|-------------|----------|---------|
 | `MONEI_API_KEY` | MONEI API key from [Dashboard](https://dashboard.monei.com/settings/api) | Yes | Yes |
 | `MONEI_ACCOUNT_ID` | MONEI merchant account ID | Yes | No |
-| `MONEI_WEBHOOK_SECRET` | HMAC key for webhook signature verification | Yes | Yes |
 | `MONEI_ENVIRONMENT` | `test` or `live` | Yes | No |
 | `MONEI_PAYMENT_METHODS_ENABLED` | Comma-separated list: `bizum,card,applePay,googlePay,sepaDirectDebit` | No | No |
 
@@ -109,13 +108,9 @@ For the full list of commercetools configuration variables, see [`connect.yaml`]
 
 ## Webhook configuration
 
-The processor exposes a webhook endpoint at `/webhooks/monei` for receiving payment status notifications from MONEI.
+The processor receives MONEI payment updates at `/webhooks/monei`. It sets this URL as the `callbackUrl` of every payment it creates, so no Dashboard setup is needed.
 
-1. Go to [MONEI Dashboard → Settings → Webhooks](https://dashboard.monei.com/settings/webhooks)
-2. Add the webhook URL: `https://<your-processor-url>/webhooks/monei`
-3. Copy the HMAC signing key and set it as `MONEI_WEBHOOK_SECRET`
-
-All incoming webhooks are verified using HMAC-SHA256 signatures before processing.
+MONEI signs each request with your API key. The processor verifies the `MONEI-Signature` header (HMAC-SHA256 over the raw body) with `MONEI_API_KEY` and rejects unsigned or tampered requests with `401`.
 
 ## Currencies
 

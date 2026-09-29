@@ -17,7 +17,6 @@ describe('POST /webhooks/monei', () => {
     jest.spyOn(Config, 'getConfig').mockReturnValue({
       ...Config.config,
       moneiApiKey: KEY,
-      moneiWebhookSecret: '',
       moneiWebhookToleranceSeconds: 0,
     });
     apply = jest
