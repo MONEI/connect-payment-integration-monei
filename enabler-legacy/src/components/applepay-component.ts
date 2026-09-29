@@ -9,10 +9,13 @@ import { PaymentComponent, PaymentResult, MoneiComponentOptions } from '../types
  * - Domain registered in MONEI dashboard
  *
  * Flow:
- * 1. Check Apple Pay availability via canMakePayments()
- * 2. Render Apple Pay button
+ * 1. Render the wallet button via MONEI.js PaymentRequest
+ * 2. onLoad reports whether the device supports the wallet
  * 3. Customer taps → Apple Pay sheet with Face/Touch ID
  * 4. MONEI handles merchant validation and token exchange
+ * 5. submit() confirms the payment with that token
+ *
+ * PaymentRequest shows Google Pay instead where Apple Pay is not supported.
  */
 export class ApplePayComponent implements PaymentComponent {
   private container: HTMLElement | null = null;
@@ -20,10 +23,20 @@ export class ApplePayComponent implements PaymentComponent {
   private processorUrl: string;
   private applePayButton: any = null;
   private isAvailable = false;
+  // MONEI renders the wallet button, so the token arrives through onSubmit
+  // when the customer approves in the wallet sheet, not on demand.
+  private walletToken: Promise<{ token?: string; error?: string }> | null = null;
+  private resolveWalletToken: ((result: { token?: string; error?: string }) => void) | null = null;
 
   constructor(options: MoneiComponentOptions, processorUrl: string) {
     this.options = options;
     this.processorUrl = processorUrl;
+  }
+
+  private resetWalletToken(): void {
+    this.walletToken = new Promise((resolve) => {
+      this.resolveWalletToken = resolve;
+    });
   }
 
   mount(selector: string | HTMLElement): void {
@@ -53,16 +66,9 @@ export class ApplePayComponent implements PaymentComponent {
         return;
       }
 
-      // Check if Apple Pay is available on this device/browser
-      const canPay = await monei.isApplePayAvailable?.();
-      if (!canPay) {
-        container.style.display = 'none';
-        return;
-      }
+      this.resetWalletToken();
 
-      this.isAvailable = true;
-
-      this.applePayButton = monei.ApplePay({
+      this.applePayButton = monei.PaymentRequest({
         accountId: this.options.accountId,
         sessionId: this.options.sessionToken,
         amount: this.options.amount,
@@ -72,6 +78,17 @@ export class ApplePayComponent implements PaymentComponent {
           type: 'buy',
           color: 'black',
           height: '48px',
+        },
+        // Fires with false when the device supports no wallet
+        onLoad: (isSupported: boolean) => {
+          this.isAvailable = isSupported;
+          if (!isSupported) container.style.display = 'none';
+        },
+        onSubmit: (result: { token?: string; error?: string }) => {
+          this.resolveWalletToken?.(result);
+        },
+        onError: (error: any) => {
+          this.resolveWalletToken?.({ error: error?.message || 'Apple Pay failed' });
         },
       });
 
@@ -83,6 +100,8 @@ export class ApplePayComponent implements PaymentComponent {
   }
 
   unmount(): void {
+    this.resolveWalletToken?.({ error: 'Apple Pay unmounted' });
+    this.walletToken = null;
     if (this.applePayButton) {
       this.applePayButton.destroy?.();
       this.applePayButton = null;
@@ -95,15 +114,21 @@ export class ApplePayComponent implements PaymentComponent {
   }
 
   async submit(): Promise<PaymentResult> {
-    if (!this.applePayButton) {
+    if (!this.applePayButton || !this.walletToken) {
       return { isSuccess: false, error: 'Apple Pay not initialized' };
     }
 
     try {
+      const { token, error } = await this.walletToken;
+      this.resetWalletToken();
+      if (error || !token) {
+        return { isSuccess: false, error: error || 'Apple Pay tokenization failed' };
+      }
+
       const monei = (window as any).monei;
       const result = await monei.confirmPayment({
         paymentId: this.options.sessionToken,
-        paymentToken: await this.applePayButton.getToken(),
+        paymentToken: token,
       });
 
       if (result.status === 'SUCCEEDED') {
