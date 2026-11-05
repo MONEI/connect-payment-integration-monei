@@ -2,11 +2,11 @@
 * @MONEI/engineering
 
 # Processor module
-/processor/ @jimmyn
+/processor/ @dmitriy-nevzorov
 
 # Enabler module
-/enabler/ @jimmyn
+/enabler/ @dmitriy-nevzorov
 
 # CI and repo config
-/.github/ @jimmyn
-/connect.yaml @jimmyn
+/.github/ @dmitriy-nevzorov
+/connect.yaml @dmitriy-nevzorov
